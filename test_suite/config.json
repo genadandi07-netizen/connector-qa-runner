@@ -1,0 +1,31 @@
+{
+  "description": "Runtime-конфиг сьюта connector-qa-runner: полный набор из 155 тестов в 6 модулях (egress-ACL 19, resilience-DLQ 26, storage-WAL 25, security-HMAC 25, контракты amoCRM 35, контракты 1C 25) — ACL build_request(), Token Bucket rate limiting, однократная ротация токена на 401, full-jitter backoff, HMAC-SHA256 ingress и SQLite WAL c атомарным DLQ.",
+  "hmac_secret": "${HMAC_SECRET}",
+  "retry": {
+    "max_attempts": 3,
+    "base_delay_s": 0.1,
+    "timeout_s": 2.0
+  },
+  "backoff": {
+    "strategy": "full_jitter",
+    "max_delay_s": 5.0
+  },
+  "circuit_breaker": {
+    "max_passes": 2
+  },
+  "replay": {
+    "max_age_s": 300
+  },
+  "storage": {
+    "busy_timeout_ms": 5000,
+    "journal_mode": "WAL"
+  },
+  "egress": {
+    "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+    "token": "${AMOCRM_TOKEN}"
+  },
+  "rate_limit": {
+    "rate_limit_rps": 2.0,
+    "burst": 5
+  }
+}

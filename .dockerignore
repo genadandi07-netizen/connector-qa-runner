@@ -1,0 +1,7 @@
+# Keep the image lean and free of local artifacts/secrets.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.git/
+.gitignore

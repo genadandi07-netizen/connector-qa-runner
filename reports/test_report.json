@@ -1,0 +1,13 @@
+{
+  "collected": 155,
+  "passed": 155,
+  "failed": 0,
+  "blocked": 0,
+  "categories": {
+    "network": 0,
+    "storage": 0,
+    "n8n": 0,
+    "contract": 0
+  },
+  "finished_at": "2026-10-21T09:08:42.263954+00:00"
+}

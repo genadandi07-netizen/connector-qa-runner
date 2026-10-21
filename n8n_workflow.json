@@ -1,0 +1,205 @@
+{
+  "name": "B2B Gateway Connector — CRM Webhook (HMAC SQLite HubSpot amoCRM Bitrix24)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b2b/crm",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ce634356-41ba-5390-bf7d-a044a37bebe4",
+      "name": "B2B Gateway: Webhook (POST)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "parameters": {
+          "jsCode": "// Verify HMAC-SHA256 signature + timestamp freshness (replay guard).\nconst crypto = require('crypto');\nconst item = $input.first();\nconst h = (item.json.headers || {});\nconst ts = Number(h['x-timestamp'] || h['x-n8n-timestamp'] || 0);\nconst now = Math.floor(Date.now() / 1000);\nif (!ts || Math.abs(now - ts) > 300) throw new Error('timestamp_out_of_window');\nconst raw = item.json.rawBody || JSON.stringify(item.json.body || {});\nconst secret = $env.CRM_WEBHOOK_SECRET || 'CHANGE_ME';\nconst expected = crypto.createHmac('sha256', secret).update(`${ts}.${raw}`).digest('hex');\nconst got = String(h['x-signature'] || '').replace(/^sha256=/, '');\nconst ok = got.length === expected.length &&\n  crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected));\nif (!ok) throw new Error('invalid_hmac');\nitem.json.verified = true;\nreturn $input.all();"
+        }
+      },
+      "id": "7d3ab049-d1db-5ca8-abc2-1b2d158d7507",
+      "name": "Verify HMAC-SHA256 & Timestamp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "parameters": {
+          "jsCode": "// SQLite WAL dedup with BEGIN IMMEDIATE to take a write lock atomically.\nconst Database = require('better-sqlite3');\nconst db = new Database('/data/gateway.db');\ndb.pragma('journal_mode = WAL');\nconst id = $json.event_id || $json.id;\ndb.exec('BEGIN IMMEDIATE');\nconst row = db.prepare('INSERT OR IGNORE INTO seen(event_id, ts) VALUES (?, ?)')\n  .run(id, Date.now());\ndb.exec('COMMIT');\n$json.duplicate = row.changes === 0;\nreturn $input.all();"
+        }
+      },
+      "id": "af4a9da2-c728-5b6b-a18e-8c3c70d8d35e",
+      "name": "SQLite WAL BEGIN IMMEDIATE Dedup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d144b355-1700-561d-8e40-82d8aa0695a9",
+              "leftValue": "={{ $json.duplicate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "3c6d25db-c445-5e11-9057-483be5581f34",
+      "name": "Is Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $json.contact }) }}",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "a7c7c3c5-d36e-51dc-bedb-5465549778af",
+      "name": "CRM Egress (HubSpot / amoCRM / Bitrix24)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "parameters": {
+          "jsCode": "// Atomic DLQ fallback: persist the failed envelope for later replay.\nconst Database = require('better-sqlite3');\nconst db = new Database('/data/gateway.db');\ndb.pragma('journal_mode = WAL');\ndb.prepare('INSERT INTO dlq(payload, error, ts) VALUES (?, ?, ?)')\n  .run(JSON.stringify($json), JSON.stringify($json.error || null), Date.now());\nreturn $input.all();"
+        }
+      },
+      "id": "a5a77e67-6152-5acd-9735-de9196e2f8c2",
+      "name": "DLQ Atomic Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1b022048-d58e-50f7-b8db-f46158c032a9",
+      "name": "Skip Duplicate",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "B2B Gateway: Webhook (POST)": {
+      "main": [
+        [
+          {
+            "node": "Verify HMAC-SHA256 & Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify HMAC-SHA256 & Timestamp": {
+      "main": [
+        [
+          {
+            "node": "SQLite WAL BEGIN IMMEDIATE Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQLite WAL BEGIN IMMEDIATE Dedup": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Egress (HubSpot / amoCRM / Bitrix24)": {
+      "main": [
+        [
+          {
+            "node": "DLQ Atomic Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Skip Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CRM Egress (HubSpot / amoCRM / Bitrix24)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

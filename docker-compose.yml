@@ -1,0 +1,22 @@
+# connector-qa-runner — one-command isolated test run:
+#
+#   docker compose up --build --abort-on-container-exit
+#
+# The `test-runner` service gets no network, so any accidental outbound
+# connection fails at the runtime level (belt) on top of the in-process
+# transport mocks and socket guards (braces) inside the suite.
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: connector-qa-runner:test
+    command: ["pytest", "test_suite", "-q", "--network=none"]
+    network_mode: "none"
+    read_only: true
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    tmpfs:
+      - /tmp
+      - /dev/shm
+      - /app/.pytest_cache

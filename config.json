@@ -1,0 +1,54 @@
+{
+  "name": "connector-qa-runner",
+  "type": "qa_runner",
+  "description": "Модульный B2B Test-Runner & QA-Fixer для API-шлюзов Tier 2.1-3: приём событий по FastAPI-вебхуку с HMAC-SHA256 и replay-окном 300 с, идемпотентное состояние и DLQ в SQLite WAL, прогон полного набора из 155 тестов (ACL build_request, Token Bucket rate limiting, однократная ротация токена на 401, full-jitter backoff, HMAC-SHA256, SQLite WAL, атомарный DLQ) против in-process заглушек HubSpot REST с двухпроходной доработкой по reports/bug_matrix.json (circuit breaker <= 2).",
+  "pattern": "Single Agent + Ports-and-Adapters (трёхадаптерная, Вариант A)",
+  "version": "1.0.0",
+  "complexity_score": 7,
+  "max_components": 4,
+  "max_retries": 3,
+  "requires_llm_prompts": false,
+  "pipeline": ["Developer", "n8n Dispatcher", "Connector QA-Runner"],
+  "routing_trigger": "коннектор",
+  "inputs": [
+    "HTTP POST /webhook (n8n Dispatcher -> source_adapter)"
+  ],
+  "outputs": [
+    "adapters/source_adapter.py",
+    "adapters/storage_adapter.py",
+    "adapters/egress_adapter.py",
+    "test_suite/qa_runner_core.py",
+    "test_suite/ast_guard.py",
+    "reports/test_report.json",
+    "reports/bug_matrix.json",
+    "ADAPTER_EXTENSION_GUIDE.md",
+    "MAINTENANCE.md"
+  ],
+  "tools": [
+    "pytest",
+    "python3",
+    "httpx",
+    "fastapi",
+    "pydantic",
+    "sqlite3"
+  ],
+  "components": [
+    {"id": "source_adapter", "type": "module", "role": "Ingress", "module": "adapters/source_adapter.py"},
+    {"id": "storage_adapter", "type": "module", "role": "State/Dedup + DLQ", "module": "adapters/storage_adapter.py"},
+    {"id": "qa_runner_core", "type": "agent", "role": "QA-Runner + QA-Fixer", "module": "test_suite/qa_runner_core.py"},
+    {"id": "egress_adapter", "type": "module", "role": "Egress", "module": "adapters/egress_adapter.py"}
+  ],
+  "external_skills": [
+    {
+      "name": "SQLite Database Expert",
+      "source": "martinholovsky/claude-skills-generator",
+      "install_url": "https://github.com/martinholovsky/claude-skills-generator",
+      "purpose": "Настройки WAL, PRAGMA, миграции и диагностика блокировок для storage_adapter",
+      "security_status": "safe",
+      "component": "storage_adapter"
+    }
+  ],
+  "runtime_config": "test_suite/config.json",
+  "write_scope": ["test_suite/", "reports/", "ADAPTER_EXTENSION_GUIDE.md", "MAINTENANCE.md", "agent.md", "config.json"],
+  "read_only_scope": ["adapters/", "schemas.py", "config.py", "Dockerfile", "docker-compose.yml", "*.n8n.json"]
+}

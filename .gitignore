@@ -1,0 +1,54 @@
+# ── Secrets ──────────────────────────────────────────────
+# Real environment files carry HMAC secrets and downstream tokens.
+# Only the documented template is allowed into the index.
+.env
+.env.*
+*.env
+!.env.example
+
+# ── Python caches & virtual environments ─────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+ENV/
+virtualenv/
+
+# ── Local databases (SQLite WAL sidecar files) ───────────
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# ── Dead Letter Queue (runtime artefacts) ────────────────
+dlq/
+
+# ── Temporary artefacts & logs ───────────────────────────
+/tmp/
+tmp/
+*.log
+*.tmp
+*.pid
+*.bak
+
+# ── OS / editor noise ────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

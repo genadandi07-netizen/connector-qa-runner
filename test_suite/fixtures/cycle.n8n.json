@@ -1,0 +1,13 @@
+{
+  "name": "Connector QA Gateway (cycle)",
+  "nodes": [
+    {"parameters": {}, "name": "A", "type": "n8n-nodes-base.set", "typeVersion": 3, "position": [0, 0]},
+    {"parameters": {}, "name": "B", "type": "n8n-nodes-base.set", "typeVersion": 3, "position": [200, 0]},
+    {"parameters": {}, "name": "C", "type": "n8n-nodes-base.set", "typeVersion": 3, "position": [400, 0]}
+  ],
+  "connections": {
+    "A": {"main": [[{"node": "B", "type": "main", "index": 0}]]},
+    "B": {"main": [[{"node": "C", "type": "main", "index": 0}]]},
+    "C": {"main": [[{"node": "A", "type": "main", "index": 0}]]}
+  }
+}

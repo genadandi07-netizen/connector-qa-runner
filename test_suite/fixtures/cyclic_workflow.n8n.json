@@ -1,0 +1,31 @@
+{
+  "name": "connector-cyclic",
+  "nodes": [
+    {
+      "name": "Node A",
+      "type": "n8n-nodes-base.noOp",
+      "parameters": {}
+    },
+    {
+      "name": "Node B",
+      "type": "n8n-nodes-base.noOp",
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Node A": {
+      "main": [
+        [
+          {"node": "Node B", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Node B": {
+      "main": [
+        [
+          {"node": "Node A", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  }
+}

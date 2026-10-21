@@ -1,0 +1,10 @@
+---END FILE---
+
+---OUTPUT FILE: code/test_suite/__init__.py---
+"""connector-qa-runner test suite package.
+
+Agent: connector-qa-runner
+Pattern: Single Agent + Ports-and-Adapters (source / storage / egress) with the
+qa_runner_core two-pass refinement loop.
+"""
+__all__ = []

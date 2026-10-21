@@ -1,0 +1,40 @@
+{
+  "name": "Connector QA Gateway (valid)",
+  "nodes": [
+    {
+      "parameters": {"path": "webhook", "httpMethod": "POST"},
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "cqa-webhook"
+    },
+    {
+      "parameters": {"url": "https://api.hubapi.com/crm/v3/objects/contacts", "method": "POST"},
+      "name": "HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 0],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "name": "Normalize",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {},
+      "name": "Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [660, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "HubSpot", "type": "main", "index": 0}]]},
+    "HubSpot": {"main": [[{"node": "Normalize", "type": "main", "index": 0}]]},
+    "Normalize": {"main": [[{"node": "Done", "type": "main", "index": 0}]]}
+  }
+}

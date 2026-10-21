@@ -1,0 +1,30 @@
+{
+  "name": "Connector QA Gateway (no resilience)",
+  "nodes": [
+    {
+      "parameters": {"path": "webhook", "httpMethod": "POST"},
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {"url": "https://api.hubapi.com/crm/v3/objects/contacts"},
+      "name": "HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {},
+      "name": "Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "HubSpot", "type": "main", "index": 0}]]},
+    "HubSpot": {"main": [[{"node": "Done", "type": "main", "index": 0}]]}
+  }
+}
